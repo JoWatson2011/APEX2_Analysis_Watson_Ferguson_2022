@@ -1,0 +1,59 @@
+name,set,process,nodetype
+TSC1_S1079,Local,,site
+ULK1_S638,Local,,site
+RAF1_S642,Local,,site
+RPS6KB1_S394,Local,,site
+MAP2K2_S23,Local,,site
+RRAS2_S186,Local,,site
+RPS6_S242,Local,,site
+RPS6_S244,Local,,site
+PRKCD_S645,Local,,site
+PRKCD_S304,Local,,site
+ACACA_S5,Local,,site
+RPTOR_S863,Local,,site
+BAD_S75,Local & Global,,site
+RRAGC_S2,Local,,site
+RPS6KB1_T391,Local & Global,,site
+PRKAA1_T490,Local,,site
+MAPK3_Y204,Local & Global,,site
+MAPK1_Y187,Local & Global,,site
+MAPK1_T185,Global,,site
+MAPK3_T202,Global,,site
+SGK1_S78,Global,,site
+SOS1_S1119,Global,,site
+RPS6KA3_Y707,Global,,site
+SGK1_S74,Global,,site
+RPS6KA1_S369,Global,,site
+RPS6KA1_T348,Global,,site
+RPS6KA3_Y356,Global,,site
+ACACA_S80,Global,,site
+RPS6KA3_S737,Global,,site
+BAD_S118,Global,,site
+RPS6KA1_Y691,Global,,site
+EEF2_S502,Global,,site
+ULK1_S469,Global,,site
+SOS1_S1122,Global,,site
+TSC2_S1297,Global,,site
+RPS6KA1_S358,Global,,site
+PRKAA1_T482,Global,,site
+ACACA,Local & Global,mTOR,prot
+BAD,Local & Global,mTOR,prot
+EEF2,Global,mTOR,prot
+MAP2K2,Local,mTOR,prot
+MAPK1,Local & Global,mTOR,prot
+MAPK3,Local & Global,mTOR,prot
+PRKAA1,Local & Global,mTOR,prot
+PRKCD,Local,mTOR,prot
+RAF1,Local,mTOR,prot
+RPS6,Local,mTOR,prot
+RPS6KA1,Global,mTOR,prot
+RPS6KA3,Global,mTOR,prot
+RPS6KB1,Local & Global,mTOR,prot
+RPTOR,Local,mTOR,prot
+RRAGC,Local,mTOR,prot
+RRAS2,Local,mTOR,prot
+SGK1,Global,mTOR,prot
+SOS1,Global,mTOR,prot
+TSC1,Local,mTOR,prot
+TSC2,Global,mTOR,prot
+ULK1,Local & Global,mTOR,prot
