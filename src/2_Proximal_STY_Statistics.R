@@ -12,13 +12,6 @@ sty <-
   readRDS("data/sty_Flt.rds") %>% 
   mutate(`Gene names` = gsub(";.*", "", `Gene names`),
          id_site = paste0(`Gene names`, "_", `Amino acid`, Position))
-
-# Impute missing values in data
-sty[,grep("Intensity", colnames(sty))] <-  
-  apply(sty[,grep("Intensity", colnames(sty))], 2, function(i) 
-    imputeLCMD::impute.QRILC(as.matrix(i), tune.sigma = 1.9)[[1]]
-  )
-
 experiments <-
   grep("Intensity ", colnames(sty), value = T) %>%
   gsub("Intensity ", "", .) %>%
@@ -27,6 +20,24 @@ experiments <-
 
 colnames(sty)[grep("Intensity ", colnames(sty))] <-
   experiments
+# Impute missing values in data
+sty <- sty %>%
+  dplyr::select(id_site, grep("A_0[123]", colnames(sty))) %>%
+  pivot_longer(cols = -1) %>%
+  mutate(grp = gsub("_0[123]", "", name)) %>% 
+  group_by(id_site,grp) %>% 
+  filter(sum(is.na(value))<2) %>% 
+  ungroup() %>% 
+  select(-grp) %>% 
+  pivot_wider(id_cols = id_site, values_fn=median) %>% 
+  as.data.frame()
+
+sty[,2:ncol(sty)] <-  
+  apply(sty[,2:ncol(sty)], 2, function(i) 
+    imputeLCMD::impute.QRILC(as.matrix(i), tune.sigma = 1.9)[[1]]
+  )
+
+
 
 # Data in long format
 lfq <- sty %>%
@@ -156,14 +167,11 @@ pheatmap::pheatmap(as.matrix(cl[,1:3]), #use the matrix without the cluster colu
 #dev.off() # Will manipulate legend etc. in illustrator
 
 normGFP_cl <- data.frame(id_site = names(den_cl_normGFP), cl = den_cl_normGFP) %>% 
-  filter(cl %in% c(4, 5, 6, 7)) %>% 
-  mutate(cl_name = ifelse(cl == 4, "RAB11_unique", 
-                          ifelse(cl == 5, "RE_profile",
-                                 ifelse(cl == 6, "FGFR2_F_unique", 
-                                        ifelse(cl == 7, "RE_profile2", NA)))),
-         gene = gsub("_.*", "", id_site),
-        # R11_interactor = ifelse(gene %in% rab11_interactome$Gene.names, T, F)
-        )
+  filter(cl %in% c(1,4)) %>% 
+  mutate(cl_name = ifelse(cl == 1, "RAB11_profile", 
+                          ifelse(cl == 4, "RE_profile", NA)),
+         gene = gsub("_.*", "", id_site)
+  )
 
 cols <- sapply(1:length(unique(normGFP_cl$cl_name)), function(i){
   paletteer_d("ggsci::category10_d3", length(unique(normGFP_cl$cl_name)))[i]
@@ -190,53 +198,6 @@ normGFP_cl_KEGG <- lapply(unique(normGFP_cl$cl_name), function(i){
 sty_sig <- filter(sty, id_site %in% lfq_normGFP$id_site) 
 sty_sig <- left_join(sty_sig, 
              normGFP_cl[,c("id_site", "cl_name")], 
-             by = "id_site") %>% 
-  left_join(
-    tibble::rownames_to_column(forhm_normGFP, "id_site"),
-    by = "id_site"
-  )
+             by = "id_site")
 
 readr::write_csv(sty_sig, "results/data/APEX_STY_SIG_CLUSTERED.csv")
-
-RE_kegg_forPaper <- calculateEnrichment(
-  gsub("_.*", "", 
-       normGFP_cl[normGFP_cl$cl_name == "RE_profile", ]$id_site), 
-  "KEGG_2019_Human") %>% 
-  slice(1:25) %>% 
-  arrange(desc(Adjusted.P.value)) %>% 
-  mutate(Term = gsub(" Homo sapiens hsa.*", "", Term),
-         order = row_number(),
-         x = "cluster") %>%
-  ggplot(aes(x = x, y = reorder(Term, order))) + 
-  #geom_col(fill = "#ABD9E9") + 
-  geom_point(aes(color = x, size = Adjusted.P.value)) +
-  theme_bw() +
-#  xlab("KEGG Pathway") +
- # ylab("-log(FDR)") +
-  #coord_flip() +
-  guides(size = "none", color = "none") +
-  theme(
-    legend.key.size = unit(2, "mm"),
-    axis.title = element_text(size=6),
-    plot.margin = margin(0,0,0,0),
-    axis.text.y = element_text(size=5), 		
-    axis.text.x = element_text(size = 5, angle = 30, hjust=0, face = "bold"),
-    axis.title.y = element_text(size=6, face="bold") ,	
-    axis.title.x = element_blank(),
-    legend.text = element_text(size = 6),
-    legend.title = element_text(size = 6))
-RE_kegg_forPaper
-  #       ) + 
-  # geom_hline(yintercept = 2.995732, color = "black", 
-  #            linetype = "dotted")
-# ggsave("results/figs/forPaper/Figure1_STY_RE_pathway.pdf", plot = RE_kegg_forPaper,
-#        width = 70, height = 65, unit = "mm", dpi = 300)
-ggsave("results/figs/forPaper/STY_ProximalSignalling_KEGG.pdf",
-       plot = RE_kegg_forPaper,
-       width = 46, height = 75, unit = "mm", dpi = 300)
-readr::write_csv(RE_kegg_forPaper$data[,c("Term",
-                                          "Adjusted.P.value",
-                                          "Genes")],
-                 "results/data/SupplementaryTables/4I_APEX-STY-KEGG.csv")
-
-

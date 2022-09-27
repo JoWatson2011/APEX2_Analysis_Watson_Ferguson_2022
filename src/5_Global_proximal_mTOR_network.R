@@ -5,7 +5,8 @@ library(enrichR)
 library(EnrichmentBrowser)
 library(org.Hs.eg.db)
 
-sty_sig <- readr::read_csv("results/data/APEX_STY_SIG_CLUSTERED.csv")
+sty_sig <- readr::read_csv("results/data/APEX_STY_SIG_CLUSTERED.csv") %>% 
+  mutate(`Gene names` = gsub("_.*","", id_site))
 total <- read_csv("results/data/GLOBAL_UPREG_40MIN.csv")
 string <- readRDS("data/STRINGexpmtgene_lowconf.rds") %>% 
   dplyr::select(-ID) %>% 
@@ -14,8 +15,7 @@ string <- readRDS("data/STRINGexpmtgene_lowconf.rds") %>%
 hsa <- getGenesets(org = "hsa", db = "kegg", cache = TRUE, return.type="list")
 mtor_pathways <- c(
   grep("mTOR", names(hsa), value = T),
-  grep("utophagy", names(hsa), value = T),
-  grep("AMPK", names(hsa), value = T)
+  grep("utophagy", names(hsa), value = T)
 )
 
 mtor_pathway_genes <- sapply(mtor_pathways, function(i){
@@ -44,7 +44,7 @@ total_v <- total %>%
   mutate(set = "Global")
 
 RE_v <- sty_sig %>% 
-  filter(cl_name == "RE_profile") %>% 
+  filter(!is.na(cl_name)) %>% 
   dplyr::select(v =`Gene names`) %>% 
   na.omit() %>% 
   unique() %>% 
@@ -68,12 +68,12 @@ el <- string %>%
   rbind(
     data.frame(
       protein1 = sty_sig[sty_sig$`Gene names` %in% comb_v$v &
-                           sty_sig$cl_name == "RE_profile",]$id_site,
+                           !is.na(sty_sig$cl_name),]$id_site,
       protein2 = sty_sig[sty_sig$`Gene names` %in% comb_v$v &
-                           sty_sig$cl_name == "RE_profile",]$`Gene names`,
+                           !is.na(sty_sig$cl_name),]$`Gene names`,
       edgetype = "site-prot"),
     data.frame(
-      protein1 = total[total$`Gene names` %in% comb_v$v,]$id,
+      protein1 = total[total$`Gene names` %in% comb_v$v,]$id_site,
       protein2 = total[total$`Gene names` %in% comb_v$v,]$`Gene names`,
       edgetype = "site-prot") 
   ) %>% 
@@ -83,13 +83,13 @@ v_new <-  data.frame(
 ) %>% 
   mutate(#name = gsub("^.*_", "", name),
     set = ifelse(v %in% 
-                   sty_sig$id_site[sty_sig$cl_name == "RE_profile"] &
-                   v %in% total$id,
+                   sty_sig$id_site[!is.na(sty_sig$cl_name)] &
+                   v %in% total$id_site,
                  "Local & Global",
                  ifelse(v %in% 
-                          sty_sig$id_site[sty_sig$cl_name == "RE_profile"],
+                          sty_sig$id_site[!is.na(sty_sig$cl_name)],
                         "Local",
-                        ifelse(v %in% total$id,
+                        ifelse(v %in% total$id_site,
                                "Global",
                                "")
                  )
@@ -129,6 +129,7 @@ mtor_nw <- BioNet::largestComp(
                    V(nw)[(V(nw)$process == "mTOR") |
                            V(nw)$nodetype == "site"])
 )
+View(as_data_frame(mtor_nw, "vertices"))
 
 #Export to cytoscape for visualisation
 write_csv(as_data_frame(mtor_nw), 
